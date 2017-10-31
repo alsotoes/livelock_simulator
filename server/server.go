@@ -1,26 +1,31 @@
 package server
 
 import (
-	"bufio"
-	"io"
+	_ "bufio"
+	_ "io"
 	"log"
 	_ "math/rand"
 	"net"
 	"os"
-	"strconv"
-	"strings"
+	_ "strconv"
+	_ "strings"
 	_ "time"
 )
 
 const (
-	Message       = "Pong"
-	StopCharacter = "\r\n\r\n"
+	Message       = "pong"
 )
 
-func Get(port int) {
+func Get(port int, ip string) {
 
-	listen, err := net.Listen("tcp4", ":"+strconv.Itoa(port))
-	defer listen.Close()
+    addr := net.UDPAddr{
+        Port: port,
+        IP: net.ParseIP(ip),
+    }
+
+    p := make([]byte, 1024)
+	conn, err := net.ListenUDP("udp", &addr)
+
 	if err != nil {
 		log.Fatalf("Socket listen port %d failed,%s", port, err)
 		os.Exit(1)
@@ -28,53 +33,23 @@ func Get(port int) {
 	log.Printf("Begin listen port: %d", port)
 
 	for {
-		conn, err := listen.Accept()
-		if err != nil {
-			log.Fatalln(err)
-			continue
-		}
-		go handler(conn)
+        _,remoteaddr,err := conn.ReadFromUDP(p)
+        log.Printf("Read a message from %v %s", remoteaddr, p)
+
+        if err !=  nil {
+            log.Printf("**** Some error  %v", err)
+            continue
+        }
+        go handler(conn, remoteaddr, p)
 	}
 
 }
 
-func handler(conn net.Conn) {
+func handler(conn *net.UDPConn, addr *net.UDPAddr, message []byte) {
+    _,err := conn.WriteToUDP([]byte(Message), addr)
+    //_,err := conn.WriteToUDP(message, addr)
 
-	defer conn.Close()
-
-	var (
-		buf = make([]byte, 1024)
-		r   = bufio.NewReader(conn)
-		w   = bufio.NewWriter(conn)
-	)
-
-ILOOP:
-	for {
-		n, err := r.Read(buf)
-		data := string(buf[:n])
-
-		switch err {
-		case io.EOF:
-			break ILOOP
-		case nil:
-			//log.Println("Receive:", data)
-			if isTransportOver(data) {
-				break ILOOP
-			}
-
-		default:
-			log.Fatalf("Receive data failed:%s", err)
-			return
-		}
-
-	}
-
-	w.Write([]byte(Message))
-	w.Flush()
-
-}
-
-func isTransportOver(data string) (over bool) {
-	over = strings.HasSuffix(data, "\r\n\r\n")
-	return
+    if err != nil {
+        log.Printf("**** Couldn't send response %v", err)
+    }
 }

@@ -11,14 +11,10 @@ import (
 	"time"
 )
 
-const (
-	StopCharacter = "\r\n\r\n"
-)
-
 func Call(wg *sync.WaitGroup, counter int, ip string, port int, uuid string) {
 
 	addr := strings.Join([]string{ip, strconv.Itoa(port)}, ":")
-	conn, err := net.Dial("tcp4", addr)
+	conn, err := net.Dial("udp", addr)
 
 	defer wg.Done()
 	defer conn.Close()
@@ -30,12 +26,12 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, uuid string) {
 	start := time.Now()
 
 	conn.Write([]byte(uuid))
-	conn.Write([]byte(StopCharacter))
 
 	buff := make([]byte, 1024)
 	n, _ := conn.Read(buff)
 
 	t := time.Now()
 
-	log.Printf("Counter: %d => Send: %s, %s, %s", counter, uuid, buff[:n], t.Sub(start))
+	log.Printf("Counter: %d => Send: %s, Recieved: %s, Elapsed time: %s",
+        counter, uuid, buff[:n], t.Sub(start))
 }

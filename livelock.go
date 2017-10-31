@@ -37,7 +37,7 @@ func main() {
 
 	case "server":
 		log.Printf("*** SERVER CODE")
-		server.Get(port)
+		server.Get(port, ip)
 	default:
 		log.Println("*** ERROR: Option unknown")
 	}
