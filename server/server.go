@@ -12,10 +12,6 @@ import (
 	_ "time"
 )
 
-const (
-	Message = "pong"
-)
-
 func Get(port int, ip string) {
 
 	addr := net.UDPAddr{
@@ -40,16 +36,11 @@ func Get(port int, ip string) {
 			log.Printf("**** Some error  %v", err)
 			continue
 		}
-		go handler(conn, remoteaddr, p)
+
+		_, err = conn.WriteToUDP(p, remoteaddr)
+		if err != nil {
+			log.Printf("**** Couldn't send response %v", err)
+		}
 	}
 
-}
-
-func handler(conn *net.UDPConn, addr *net.UDPAddr, message []byte) {
-	_, err := conn.WriteToUDP([]byte(Message), addr)
-	//_,err := conn.WriteToUDP(message, addr)
-
-	if err != nil {
-		log.Printf("**** Couldn't send response %v", err)
-	}
 }
