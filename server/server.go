@@ -13,17 +13,17 @@ import (
 )
 
 const (
-	Message       = "pong"
+	Message = "pong"
 )
 
 func Get(port int, ip string) {
 
-    addr := net.UDPAddr{
-        Port: port,
-        IP: net.ParseIP(ip),
-    }
+	addr := net.UDPAddr{
+		Port: port,
+		IP:   net.ParseIP(ip),
+	}
 
-    p := make([]byte, 1024)
+	p := make([]byte, 1024)
 	conn, err := net.ListenUDP("udp", &addr)
 
 	if err != nil {
@@ -33,23 +33,23 @@ func Get(port int, ip string) {
 	log.Printf("Begin listen port: %d", port)
 
 	for {
-        _,remoteaddr,err := conn.ReadFromUDP(p)
-        log.Printf("Read a message from %v %s", remoteaddr, p)
+		_, remoteaddr, err := conn.ReadFromUDP(p)
+		log.Printf("Read a message from %v %s", remoteaddr, p)
 
-        if err !=  nil {
-            log.Printf("**** Some error  %v", err)
-            continue
-        }
-        go handler(conn, remoteaddr, p)
+		if err != nil {
+			log.Printf("**** Some error  %v", err)
+			continue
+		}
+		go handler(conn, remoteaddr, p)
 	}
 
 }
 
 func handler(conn *net.UDPConn, addr *net.UDPAddr, message []byte) {
-    _,err := conn.WriteToUDP([]byte(Message), addr)
-    //_,err := conn.WriteToUDP(message, addr)
+	_, err := conn.WriteToUDP([]byte(Message), addr)
+	//_,err := conn.WriteToUDP(message, addr)
 
-    if err != nil {
-        log.Printf("**** Couldn't send response %v", err)
-    }
+	if err != nil {
+		log.Printf("**** Couldn't send response %v", err)
+	}
 }
