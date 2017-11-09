@@ -2,7 +2,6 @@ package main
 
 import (
 	"./client"
-	"./helper"
 	"./server"
 	"flag"
 	"log"
@@ -10,14 +9,15 @@ import (
 )
 
 var (
-	ip    string = "127.0.0.1"
-	port  int    = 3333
-	limit int    = 250
+	ip          string = "127.0.0.1"
+	port        int    = 3333
+	limit       int    = 50
+    msgLimit    int    = 50
 )
 
 func main() {
 
-	impersonationPtr := flag.String("imp", "server", "Server or client")
+	impersonationPtr := flag.String("imp", "server", "server or client")
 	flag.Parse()
 
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
@@ -31,7 +31,7 @@ func main() {
 
 		for i := 0; i < limit; i++ {
 			wg.Add(1)
-			go client.Call(&wg, i, ip, port, uuid.GenUUID())
+			go client.Call(&wg, i, ip, port, msgLimit)
 		}
 		wg.Wait()
 
