@@ -1,22 +1,21 @@
 package client
 
 import (
-	"../helper"
 	"fmt"
 	"log"
-	_ "math/rand"
 	"net"
 	"strconv"
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/alsotoes/livelock_simulator/helper"
 )
 
 func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int) {
 
 	addr := strings.Join([]string{ip, strconv.Itoa(port)}, ":")
 	conn, err := net.Dial("udp", addr)
-	//conn, err := net.DialTimeout("udp", addr, time.Second)
 
 	defer wg.Done()
 	defer conn.Close()
@@ -41,8 +40,8 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int) {
 
 			t := time.Now()
 
-			log.Printf("Counter: %d => Send: %s, Recieved: %s, Elapsed time: %s",
-				counter, uuidMsg, response, t.Sub(start))
+			log.Printf("Thread: %d, Msg: %d => Send: %s, Recieved: %s, Elapsed time: %s",
+				counter, msgCounter, uuidMsg, response, t.Sub(start))
 		}(i)
 	}
 	msg.Wait()
