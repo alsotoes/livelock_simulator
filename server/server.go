@@ -1,25 +1,13 @@
 package server
 
 import (
-	_ "bufio"
-	_ "io"
 	"log"
-	_ "math/rand"
 	"net"
 	"os"
-	_ "strconv"
-	_ "strings"
-	_ "syscall"
-	_ "time"
-)
+	"strings"
 
-/*
-func setNoReuseAddress(conn net.PacketConn) {
-	file, _ := conn.(*net.UDPConn).File()
-	fd := file.Fd()
-	syscall.SetsockoptInt(fd, syscall.SOL_SOCKET, syscall.SO_REUSEADDR, 0)
-}
-*/
+	"github.com/alsotoes/livelock_simulator/common"
+)
 
 func Get(port int, ip string, threadQty int, msgQty int) {
 
@@ -30,8 +18,6 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 
 	p := make([]byte, 1024)
 	conn, err := net.ListenUDP("udp", &addr)
-	//setNoReuseAddress(conn)
-	//conn.SetTimeout(500 * 1000 * 1000)
 
 	if err != nil {
 		log.Fatalf("Socket listen port %d failed,%s", port, err)
@@ -39,26 +25,31 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 	}
 	log.Printf("Begin listen => %s:%d", ip, port)
 
-	queue := PrepareQueue(msgQty)
+	threadQueue := PrepareQueue(threadQty, msgQty)
+
+	threadQueue[0].Push(&common.Node{"HOLA!"})
+	log.Printf("== VALUE ==> %s", threadQueue[0].Pop().Value)
 
 	// INICIO: test de codigo
-	go func() {
-		queue[50] <- "asddasd"
-		queue[50] <- "xxxxxxx"
-		queue[50] <- "yyyyyyy"
-		log.Printf("=> %d", len(queue[50]))
-	}()
+	/*
+		go func() {
+			queue[50] <- "asddasd"
+			queue[50] <- "xxxxxxx"
+			queue[50] <- "yyyyyyy"
+			log.Printf("=> %d", len(queue[50]))
+		}()
 
-	x := <-queue[50]
-	log.Printf("%s", x)
+		x := <-queue[50]
+		log.Printf("%s", x)
 
-	log.Printf("Begin listen port: %d", port)
+		log.Printf("Begin listen port: %d", port)
+	*/
 	// FIN: test de codigo
 
 	for {
 		_, remoteaddr, err := conn.ReadFromUDP(p)
 		//HandlePackage(queue, p)
-		log.Printf("Read a message from %v %s", remoteaddr, p)
+		//log.Printf("Read a message from %v %s", remoteaddr, p)
 
 		if err != nil {
 			log.Printf("**** Some error  %v", err)
@@ -73,15 +64,31 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 
 }
 
-func PrepareQueue(msgQty int) [100]chan string {
-	var queue [100]chan string
+func PrepareQueue(threadQty, msgQty int) []*common.Queue {
+	threadQueue := make([]*common.Queue, threadQty)
 
-	for i := range queue {
-		queue[i] = make(chan string, msgQty)
+	for i := range threadQueue {
+		threadQueue[i] = &common.Queue{Nodex: make([]*common.Node, msgQty)}
 	}
 
-	return queue
+	return threadQueue
 }
 
-func HandlePackage(queue chan string, message []byte) {
+func HandlePackage(queue [100]chan string, message []byte) {
+	msg := string(message[:1024])
+	msgArr := strings.Split(msg, "+")
+
+	//thread := msgArr[0]
+	//msgCount := msgArr[1]
+	uuid := msgArr[2]
+
+	log.Printf("Read a message from %s", uuid)
+	/*
+	   go func() {
+	       queue[50] <- "asddasd"
+	       queue[50] <- "xxxxxxx"
+	       queue[50] <- "yyyyyyy"
+	       log.Printf("=> %d", len(queue[50]))
+	   }()
+	*/
 }

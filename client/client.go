@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/alsotoes/livelock_simulator/helper"
+	"github.com/alsotoes/livelock_simulator/common"
 )
 
 func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int) {
@@ -32,7 +32,7 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int) {
 		go func(msgCounter int) {
 			defer msg.Done()
 
-			uuidMsg := uuid.GenUUID()
+			uuidMsg := common.GenUUID()
 			start := time.Now()
 
 			conn.Write([]byte(GenMessage(counter, msgCounter, uuidMsg)))
