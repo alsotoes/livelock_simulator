@@ -4,7 +4,9 @@ import (
 	"log"
 	"net"
 	"os"
+	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/alsotoes/livelock_simulator/common"
 )
@@ -27,29 +29,19 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 
 	threadQueue := PrepareQueue(threadQty, msgQty)
 
-	threadQueue[0].Push(&common.Node{"HOLA!"})
-	log.Printf("== VALUE ==> %s", threadQueue[0].Pop().Value)
-
 	// INICIO: test de codigo
 	/*
-		go func() {
-			queue[50] <- "asddasd"
-			queue[50] <- "xxxxxxx"
-			queue[50] <- "yyyyyyy"
-			log.Printf("=> %d", len(queue[50]))
-		}()
-
-		x := <-queue[50]
-		log.Printf("%s", x)
-
-		log.Printf("Begin listen port: %d", port)
+		threadQueue[0].Push(&common.Node{"HOLA!"})
+		log.Printf("== VALUE ==> %s", threadQueue[0].Pop().Value)
+		log.Printf("== Len ==> %d", len(threadQueue))
 	*/
 	// FIN: test de codigo
 
+	var wgThreads sync.WaitGroup
 	for {
 		_, remoteaddr, err := conn.ReadFromUDP(p)
-		//HandlePackage(queue, p)
-		//log.Printf("Read a message from %v %s", remoteaddr, p)
+		wgThreads.Add(1)
+		HandlePackage(&wgThreads, threadQueue, remoteaddr, p)
 
 		if err != nil {
 			log.Printf("**** Some error  %v", err)
@@ -61,6 +53,7 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 			log.Printf("**** Couldn't send response %v", err)
 		}
 	}
+	wgThreads.Wait()
 
 }
 
@@ -68,27 +61,24 @@ func PrepareQueue(threadQty, msgQty int) []*common.Queue {
 	threadQueue := make([]*common.Queue, threadQty)
 
 	for i := range threadQueue {
-		threadQueue[i] = &common.Queue{Nodex: make([]*common.Node, msgQty)}
+		threadQueue[i] = &common.Queue{NodeStr: make([]*common.Node, msgQty)}
 	}
 
 	return threadQueue
 }
 
-func HandlePackage(queue [100]chan string, message []byte) {
+func HandlePackage(wgThreads *sync.WaitGroup, threadQueue []*common.Queue,
+	remoteaddr *net.UDPAddr, message []byte) {
+
+	defer wgThreads.Done()
+
 	msg := string(message[:1024])
 	msgArr := strings.Split(msg, "+")
 
-	//thread := msgArr[0]
-	//msgCount := msgArr[1]
+	thread, _ := strconv.Atoi(msgArr[0])
+	msgCount, _ := strconv.Atoi(msgArr[1])
 	uuid := msgArr[2]
 
-	log.Printf("Read a message from %s", uuid)
-	/*
-	   go func() {
-	       queue[50] <- "asddasd"
-	       queue[50] <- "xxxxxxx"
-	       queue[50] <- "yyyyyyy"
-	       log.Printf("=> %d", len(queue[50]))
-	   }()
-	*/
+	threadQueue[thread].Push(&common.Node{uuid})
+	log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, uuid)
 }

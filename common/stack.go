@@ -6,18 +6,18 @@ type Node struct {
 
 // Stack is a basic LIFO stack that resizes as needed.
 type Stack struct {
-	Nodex []*Node
-	count int
+	NodeStr []*Node
+	count   int
 }
 
 // Push adds a node to the stack.
 func (s *Stack) Push(n *Node) {
-	if s.count >= len(s.Nodex) {
-		Nodex := make([]*Node, len(s.Nodex)*2)
-		copy(Nodex, s.Nodex)
-		s.Nodex = Nodex
+	if s.count >= len(s.NodeStr) {
+		NodeStr := make([]*Node, len(s.NodeStr)*2)
+		copy(NodeStr, s.NodeStr)
+		s.NodeStr = NodeStr
 	}
-	s.Nodex[s.count] = n
+	s.NodeStr[s.count] = n
 	s.count++
 }
 
@@ -26,31 +26,31 @@ func (s *Stack) Pop() *Node {
 	if s.count == 0 {
 		return nil
 	}
-	node := s.Nodex[s.count-1]
+	node := s.NodeStr[s.count-1]
 	s.count--
 	return node
 }
 
 // Queue is a basic FIFO queue based on a circular list that resizes as needed.
 type Queue struct {
-	Nodex []*Node
-	head  int
-	tail  int
-	count int
+	NodeStr []*Node
+	head    int
+	tail    int
+	count   int
 }
 
 // Push adds a node to the queue.
 func (q *Queue) Push(n *Node) {
 	if q.head == q.tail && q.count > 0 {
-		Nodex := make([]*Node, len(q.Nodex)*2)
-		copy(Nodex, q.Nodex[q.head:])
-		copy(Nodex[len(q.Nodex)-q.head:], q.Nodex[:q.head])
+		NodeStr := make([]*Node, len(q.NodeStr)*2)
+		copy(NodeStr, q.NodeStr[q.head:])
+		copy(NodeStr[len(q.NodeStr)-q.head:], q.NodeStr[:q.head])
 		q.head = 0
-		q.tail = len(q.Nodex)
-		q.Nodex = Nodex
+		q.tail = len(q.NodeStr)
+		q.NodeStr = NodeStr
 	}
-	q.Nodex[q.tail] = n
-	q.tail = (q.tail + 1) % len(q.Nodex)
+	q.NodeStr[q.tail] = n
+	q.tail = (q.tail + 1) % len(q.NodeStr)
 	q.count++
 }
 
@@ -59,21 +59,21 @@ func (q *Queue) Pop() *Node {
 	if q.count == 0 {
 		return nil
 	}
-	node := q.Nodex[q.head]
-	q.head = (q.head + 1) % len(q.Nodex)
+	node := q.NodeStr[q.head]
+	q.head = (q.head + 1) % len(q.NodeStr)
 	q.count--
 	return node
 }
 
 /*
 func main() {
-	s := &Stack{Nodex: make([]*Node, 3)}
+	s := &Stack{NodeStr: make([]*Node, 3)}
 	s.Push(&Node{1})
 	s.Push(&Node{2})
 	s.Push(&Node{3})
 	fmt.Printf("%v, %v, %v\n", s.Pop().Value, s.Pop().Value, s.Pop().Value)
 
-	q := &Queue{Nodex: make([]*Node, 3)}
+	q := &Queue{NodeStr: make([]*Node, 3)}
 	q.Push(&Node{1})
 	q.Push(&Node{2})
 	q.Push(&Node{3})

@@ -14,7 +14,7 @@ func main() {
 	impersonationPtr := flag.String("imp", "server", "server or client")
 	serverIpPtr := flag.String("ip", "127.0.0.1", "server ip")
 	portPtr := flag.Int("port", 3333, "server port to listen for connections")
-	threadLimitPtr := flag.Int("threads", 100, "how many threads will be created")
+	threadLimitPtr := flag.Int("threads", 50, "how many threads will be created")
 	msgLimitPtr := flag.Int("messages", 50, "how many threads will be created")
 	flag.Parse()
 
