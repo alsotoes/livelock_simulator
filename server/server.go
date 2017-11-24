@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"sync"
 
 	"github.com/alsotoes/livelock_simulator/common"
 )
@@ -37,11 +36,10 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 	*/
 	// FIN: test de codigo
 
-	var wgThreads sync.WaitGroup
 	for {
 		_, remoteaddr, err := conn.ReadFromUDP(p)
-		wgThreads.Add(1)
-		HandlePackage(&wgThreads, threadQueue, remoteaddr, p)
+
+		HandlePackage(threadQueue, remoteaddr, p)
 
 		if err != nil {
 			log.Printf("**** Some error  %v", err)
@@ -53,8 +51,6 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 			log.Printf("**** Couldn't send response %v", err)
 		}
 	}
-	wgThreads.Wait()
-
 }
 
 func PrepareQueue(threadQty, msgQty int) []*common.Queue {
@@ -67,10 +63,8 @@ func PrepareQueue(threadQty, msgQty int) []*common.Queue {
 	return threadQueue
 }
 
-func HandlePackage(wgThreads *sync.WaitGroup, threadQueue []*common.Queue,
-	remoteaddr *net.UDPAddr, message []byte) {
-
-	defer wgThreads.Done()
+func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
+	message []byte) {
 
 	msg := string(message[:1024])
 	msgArr := strings.Split(msg, "+")
