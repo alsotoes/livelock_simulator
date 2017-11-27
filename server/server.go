@@ -10,7 +10,9 @@ import (
 	"github.com/alsotoes/livelock_simulator/common"
 )
 
-func Get(port int, ip string, threadQty int, msgQty int) {
+var totalMem = 0
+
+func Get(port int, ip string, threadQty int, msgQty int, memMaxPtr int) {
 
 	addr := net.UDPAddr{
 		Port: port,
@@ -28,25 +30,22 @@ func Get(port int, ip string, threadQty int, msgQty int) {
 
 	threadQueue := PrepareQueue(threadQty, msgQty)
 
-	// INICIO: test de codigo
-	/*
-		threadQueue[0].Push(&common.Node{"HOLA!"})
-		log.Printf("== VALUE ==> %s", threadQueue[0].Pop().Value)
-		log.Printf("== Len ==> %d", len(threadQueue))
-	*/
-	// FIN: test de codigo
-
 	for {
 		_, remoteaddr, err := conn.ReadFromUDP(p)
 
-		HandlePackage(threadQueue, remoteaddr, p)
+		drop := HandlePackage(threadQueue, remoteaddr, p, memMaxPtr)
 
 		if err != nil {
 			log.Printf("**** Some error  %v", err)
 			continue
 		}
 
-		_, err = conn.WriteToUDP(p, remoteaddr)
+		if drop {
+			_, err = conn.WriteToUDP([]byte("-DROP-"), remoteaddr)
+		} else {
+			_, err = conn.WriteToUDP(p, remoteaddr)
+		}
+
 		if err != nil {
 			log.Printf("**** Couldn't send response %v", err)
 		}
@@ -64,8 +63,9 @@ func PrepareQueue(threadQty, msgQty int) []*common.Queue {
 }
 
 func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
-	message []byte) {
+	message []byte, memMaxPtr int) bool {
 
+	drop := false
 	msg := string(message[:1024])
 	msgArr := strings.Split(msg, "+")
 
@@ -73,6 +73,18 @@ func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
 	msgCount, _ := strconv.Atoi(msgArr[1])
 	uuid := msgArr[2]
 
-	threadQueue[thread].Push(&common.Node{uuid})
-	log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, uuid)
+	if totalMem < memMaxPtr {
+		totalMem = totalMem + 1
+		threadQueue[thread].Push(&common.Node{uuid})
+		drop = false
+		log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, uuid)
+	} else {
+		drop = true
+		log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, "-DROP-")
+	}
+
+	return drop
+}
+
+func ForwardingLayer() {
 }

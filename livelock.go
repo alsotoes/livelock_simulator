@@ -16,10 +16,14 @@ func main() {
 	portPtr := flag.Int("port", 3333, "server port to listen for connections")
 	threadLimitPtr := flag.Int("threads", 50, "how many threads will be created")
 	msgLimitPtr := flag.Int("messages", 50, "how many threads will be created")
+	memMaxPtr := flag.Int("memory", 1500, "maximun global memory to store messages")
 	flag.Parse()
 
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
-	//log.Printf("tail: %s", flag.Args())
+
+	if (*threadLimitPtr)*(*msgLimitPtr) < (*memMaxPtr) {
+		*memMaxPtr = (*threadLimitPtr) * (*msgLimitPtr)
+	}
 
 	switch *impersonationPtr {
 	case "client":
@@ -34,7 +38,7 @@ func main() {
 
 	case "server":
 		log.Printf("*** SERVER CODE")
-		server.Get(*portPtr, *serverIpPtr, *threadLimitPtr, *msgLimitPtr)
+		server.Get(*portPtr, *serverIpPtr, *threadLimitPtr, *msgLimitPtr, *memMaxPtr)
 	default:
 		log.Println("*** ERROR: Option unknown")
 	}
