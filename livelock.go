@@ -17,6 +17,7 @@ func main() {
 	threadLimitPtr := flag.Int("threads", 50, "how many threads will be created")
 	msgLimitPtr := flag.Int("messages", 50, "how many threads will be created")
 	memMaxPtr := flag.Int("memory", 1500, "maximun global memory to store messages")
+	timeoutPtr := flag.Int("timeout", 10, "timeout in seconds to drop packages")
 	flag.Parse()
 
 	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
@@ -38,7 +39,8 @@ func main() {
 
 	case "server":
 		log.Printf("*** SERVER CODE")
-		server.Get(*portPtr, *serverIpPtr, *threadLimitPtr, *msgLimitPtr, *memMaxPtr)
+		server.Get(*serverIpPtr, *portPtr, *threadLimitPtr, *msgLimitPtr,
+			*memMaxPtr, *timeoutPtr)
 	default:
 		log.Println("*** ERROR: Option unknown")
 	}

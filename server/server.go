@@ -6,13 +6,14 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/alsotoes/livelock_simulator/common"
 )
 
 var totalMem = 0
 
-func Get(port int, ip string, threadQty int, msgQty int, memMaxPtr int) {
+func Get(ip string, port, threadQty, msgQty, memMaxPtr, timeoutPtr int) {
 
 	addr := net.UDPAddr{
 		Port: port,
@@ -40,10 +41,13 @@ func Get(port int, ip string, threadQty int, msgQty int, memMaxPtr int) {
 			continue
 		}
 
-		if drop {
-			_, err = conn.WriteToUDP([]byte("-DROP-"), remoteaddr)
-		} else {
+		if !drop {
 			_, err = conn.WriteToUDP(p, remoteaddr)
+		} else {
+			go func(remoteaddr *net.UDPAddr) {
+				time.Sleep(time.Second * time.Duration(timeoutPtr))
+				_, err = conn.WriteToUDP([]byte("-DROP-TIMEOUT-"), remoteaddr)
+			}(remoteaddr)
 		}
 
 		if err != nil {
