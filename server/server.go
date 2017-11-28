@@ -39,10 +39,11 @@ func Get(ip string, port, threadQty, msgQty, memMaxPtr, timeoutPtr int) {
 			continue
 		}
 
-		drop, thread := HandlePackage(threadQueue, remoteaddr, p, memMaxPtr)
-		go func(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr, threadQueue []*common.Queue, thread int) {
-			ForwardingLayer(drop, conn, remoteaddr, threadQueue, thread, timeoutPtr)
-		}(drop, conn, remoteaddr, threadQueue, thread)
+		drop, thread, msgCount := HandlePackage(threadQueue, remoteaddr, p, memMaxPtr)
+		go func(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr, threadQueue []*common.Queue,
+			thread int, msgCount int) {
+			ForwardingLayer(drop, conn, remoteaddr, threadQueue, thread, msgCount, timeoutPtr)
+		}(drop, conn, remoteaddr, threadQueue, thread, msgCount)
 	}
 }
 
@@ -57,7 +58,7 @@ func PrepareQueue(threadQty, msgQty int) []*common.Queue {
 }
 
 func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
-	message []byte, memMaxPtr int) (bool, int) {
+	message []byte, memMaxPtr int) (bool, int, int) {
 
 	drop := false
 	msg := string(message[:1024])
@@ -71,17 +72,15 @@ func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
 		totalMem = totalMem + 1
 		threadQueue[thread].Push(&common.Node{uuid})
 		drop = false
-		log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, uuid)
 	} else {
 		drop = true
-		log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, "-DROP-TIMEOUT-")
 	}
 
-	return drop, thread
+	return drop, thread, msgCount
 }
 
 func ForwardingLayer(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr,
-	threadQueue []*common.Queue, thread int, timeoutPtr int) {
+	threadQueue []*common.Queue, thread int, msgCount int, timeoutPtr int) {
 
 	message := []byte("")
 
@@ -93,6 +92,7 @@ func ForwardingLayer(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr,
 	}
 
 	_, err := conn.WriteToUDP(message, remoteaddr)
+	log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, message)
 
 	if err != nil {
 		log.Printf("**** Couldn't send response %v", err)

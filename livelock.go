@@ -2,12 +2,23 @@ package main
 
 import (
 	"flag"
+	"io/ioutil"
 	"log"
 	"sync"
 
 	"github.com/alsotoes/livelock_simulator/client"
 	"github.com/alsotoes/livelock_simulator/server"
 )
+
+func LogStdOut(logApp bool) {
+
+	if logApp {
+		log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	} else {
+		log.SetOutput(ioutil.Discard)
+	}
+
+}
 
 func main() {
 
@@ -18,9 +29,10 @@ func main() {
 	msgLimitPtr := flag.Int("messages", 50, "how many threads will be created")
 	memMaxPtr := flag.Int("memory", 1500, "maximun global memory to store messages")
 	timeoutPtr := flag.Int("timeout", 10, "timeout in seconds to drop packages")
+	debugPtr := flag.Bool("debug", true, "log to stdout")
 	flag.Parse()
 
-	log.SetFlags(log.LstdFlags | log.Lmicroseconds)
+	LogStdOut(*debugPtr)
 
 	if (*threadLimitPtr)*(*msgLimitPtr) < (*memMaxPtr) {
 		*memMaxPtr = (*threadLimitPtr) * (*msgLimitPtr)

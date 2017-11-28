@@ -40,8 +40,8 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int) {
 
 			t := time.Now()
 
-			log.Printf("Thread: %d, Msg: %d => Send: %s, Recieved: %s, Elapsed time: %s",
-				counter, msgCounter, uuidMsg, response, t.Sub(start))
+			log.Printf("Thread: %d, Msg: %d => Send: %s, Recieved: %s, Elapsed time: %f",
+				counter, msgCounter, uuidMsg, response, t.Sub(start).Seconds())
 		}(i)
 	}
 	msg.Wait()
