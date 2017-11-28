@@ -6,7 +6,6 @@ import (
 	"os"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/alsotoes/livelock_simulator/common"
 )
@@ -39,11 +38,11 @@ func Get(ip string, port, threadQty, msgQty, memMaxPtr, timeoutPtr int) {
 			continue
 		}
 
-		drop, thread, msgCount := HandlePackage(threadQueue, remoteaddr, p, memMaxPtr)
-		go func(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr, threadQueue []*common.Queue,
+		thread, msgCount := HandlePackage(threadQueue, remoteaddr, p, memMaxPtr)
+		go func(conn *net.UDPConn, remoteaddr *net.UDPAddr, threadQueue []*common.Queue,
 			thread int, msgCount int) {
-			ForwardingLayer(drop, conn, remoteaddr, threadQueue, thread, msgCount, timeoutPtr)
-		}(drop, conn, remoteaddr, threadQueue, thread, msgCount)
+			ForwardingLayer(conn, remoteaddr, threadQueue, thread, msgCount, timeoutPtr)
+		}(conn, remoteaddr, threadQueue, thread, msgCount)
 	}
 }
 
@@ -58,9 +57,8 @@ func PrepareQueue(threadQty, msgQty int) []*common.Queue {
 }
 
 func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
-	message []byte, memMaxPtr int) (bool, int, int) {
+	message []byte, memMaxPtr int) (int, int) {
 
-	drop := false
 	msg := string(message[:1024])
 	msgArr := strings.Split(msg, "+")
 
@@ -71,24 +69,22 @@ func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
 	if totalMem < memMaxPtr {
 		totalMem = totalMem + 1
 		threadQueue[thread].Push(&common.Node{uuid})
-		drop = false
-	} else {
-		drop = true
 	}
 
-	return drop, thread, msgCount
+	return thread, msgCount
 }
 
-func ForwardingLayer(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr,
+func ForwardingLayer(conn *net.UDPConn, remoteaddr *net.UDPAddr,
 	threadQueue []*common.Queue, thread int, msgCount int, timeoutPtr int) {
 
 	message := []byte("")
 
-	if drop {
-		time.Sleep(time.Second * time.Duration(timeoutPtr))
-		message = []byte("-DROP-TIMEOUT-")
-	} else {
-		message = []byte(threadQueue[thread].Pop().Value)
+	if indexCheck := threadQueue[thread]; indexCheck != nil {
+		if rawValue := indexCheck.Pop(); rawValue != nil {
+			message = []byte(rawValue.Value)
+		} else {
+			message = []byte("-DROP-")
+		}
 	}
 
 	_, err := conn.WriteToUDP(message, remoteaddr)
@@ -97,4 +93,5 @@ func ForwardingLayer(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr,
 	if err != nil {
 		log.Printf("**** Couldn't send response %v", err)
 	}
+
 }
