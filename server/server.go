@@ -39,8 +39,10 @@ func Get(ip string, port, threadQty, msgQty, memMaxPtr, timeoutPtr int) {
 			continue
 		}
 
-		drop := HandlePackage(threadQueue, remoteaddr, p, memMaxPtr)
-		go ForwardingLayer(drop, conn, remoteaddr, p, timeoutPtr)
+		drop, thread := HandlePackage(threadQueue, remoteaddr, p, memMaxPtr)
+		go func(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr, threadQueue []*common.Queue, thread int) {
+			ForwardingLayer(drop, conn, remoteaddr, threadQueue, thread, timeoutPtr)
+		}(drop, conn, remoteaddr, threadQueue, thread)
 	}
 }
 
@@ -55,7 +57,7 @@ func PrepareQueue(threadQty, msgQty int) []*common.Queue {
 }
 
 func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
-	message []byte, memMaxPtr int) bool {
+	message []byte, memMaxPtr int) (bool, int) {
 
 	drop := false
 	msg := string(message[:1024])
@@ -75,15 +77,19 @@ func HandlePackage(threadQueue []*common.Queue, remoteaddr *net.UDPAddr,
 		log.Printf("Read a message from %v [%d,%d] => %s", remoteaddr, thread, msgCount, "-DROP-TIMEOUT-")
 	}
 
-	return drop
+	return drop, thread
 }
 
 func ForwardingLayer(drop bool, conn *net.UDPConn, remoteaddr *net.UDPAddr,
-	message []byte, timeoutPtr int) {
+	threadQueue []*common.Queue, thread int, timeoutPtr int) {
+
+	message := []byte("")
 
 	if drop {
 		time.Sleep(time.Second * time.Duration(timeoutPtr))
 		message = []byte("-DROP-TIMEOUT-")
+	} else {
+		message = []byte(threadQueue[thread].Pop().Value)
 	}
 
 	_, err := conn.WriteToUDP(message, remoteaddr)
