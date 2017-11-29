@@ -28,7 +28,7 @@ func main() {
 	threadLimitPtr := flag.Int("threads", 50, "how many threads will be created")
 	msgLimitPtr := flag.Int("messages", 50, "how many threads will be created")
 	memMaxPtr := flag.Int("memory", 1500, "maximun global memory to store messages")
-	timeoutPtr := flag.Int("timeout", 10, "timeout in seconds to drop packages")
+	timeoutPtr := flag.Int("timeout", 1, "timeout in seconds to drop packages")
 	debugPtr := flag.Bool("debug", true, "log to stdout")
 	flag.Parse()
 
@@ -45,7 +45,7 @@ func main() {
 
 		for i := 0; i < *threadLimitPtr; i++ {
 			wg.Add(1)
-			go client.Call(&wg, i, *serverIpPtr, *portPtr, *msgLimitPtr)
+			go client.Call(&wg, i, *serverIpPtr, *portPtr, *msgLimitPtr, *timeoutPtr)
 		}
 		wg.Wait()
 
