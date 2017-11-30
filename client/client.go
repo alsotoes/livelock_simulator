@@ -18,7 +18,7 @@ var (
 	partialTotal    = 0
 )
 
-func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int, timeoutPtr int) {
+func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int, timeoutPtr int, arrivalRatePtr int) {
 
 	addr := strings.Join([]string{ip, strconv.Itoa(port)}, ":")
 	conn, err := net.Dial("udp", addr)
@@ -38,6 +38,10 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int, ti
 		go func(msgCounter int) {
 			defer msg.Done()
 
+			if 0 != arrivalRatePtr {
+				time.Sleep(time.Millisecond * time.Duration(arrivalRatePtr))
+			}
+
 			uuidMsg := common.GenUUID()
 			start := time.Now()
 
@@ -47,28 +51,18 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int, ti
 			t := time.Now()
 
 			partialTotal = partialTotal + 1
-			// Dropped packages that could not be push into the queue
+			// Dropped packages that could not be push into the queue, so is a loss package
 			if "-DROP-" == fmt.Sprintf("%s", response) {
 				droppedPackages = droppedPackages + 1
-			} else {
-				comma := ","
-				y := partialTotal - droppedPackages
-				fmt.Println(partialTotal, comma, y)
+				// Timed out packages, the package is returned but no between the maximun time
+			} else if t.Sub(start).Seconds() > float64(timeoutPtr) {
+				response = []byte("-TIMEOUT-")
+				timeoutPackages = timeoutPackages + 1
 			}
 
-			// Timeout packages
-			/*
-				if t.Sub(start).Seconds() > float64(timeoutPtr) {
-					response = []byte("-TIMEOUT-")
-					timeoutPackages = timeoutPackages + 1
-				}
-			*/
-
-			/*
-				comma := ","
-				y := partialTotal - droppedPackages
-				fmt.Println(partialTotal, comma, y)
-			*/
+			comma := ","
+			y := partialTotal - droppedPackages + timeoutPackages
+			fmt.Println(partialTotal, comma, y)
 
 			log.Printf("Thread: %d, Msg: %d => Send: %s, Recieved: %s, Elapsed time: %f",
 				counter, msgCounter, uuidMsg, response, t.Sub(start).Seconds())
