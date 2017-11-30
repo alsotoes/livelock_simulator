@@ -18,7 +18,8 @@ var (
 	partialTotal    = 0
 )
 
-func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int, timeoutPtr int, arrivalRatePtr int) {
+func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int,
+	timeoutPtr int, arrivalRatePtr int, printPtr int) {
 
 	addr := strings.Join([]string{ip, strconv.Itoa(port)}, ":")
 	conn, err := net.Dial("udp", addr)
@@ -60,9 +61,17 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int, ti
 				timeoutPackages = timeoutPackages + 1
 			}
 
-			comma := ","
-			y := partialTotal - droppedPackages + timeoutPackages
-			fmt.Println(partialTotal, comma, y)
+			switch printPtr {
+			case 1:
+				analysedMessages := partialTotal - droppedPackages - timeoutPackages
+				csv := fmt.Sprintf("%d,%d", partialTotal, analysedMessages)
+				fmt.Println(csv)
+			case 2:
+				if "-DROP-" != fmt.Sprintf("%s", response) && "-TIMEOUT-" != fmt.Sprintf("%s", response) {
+					avgTime := fmt.Sprintf("%f", t.Sub(start).Seconds())
+					fmt.Println(avgTime)
+				}
+			}
 
 			log.Printf("Thread: %d, Msg: %d => Send: %s, Recieved: %s, Elapsed time: %f",
 				counter, msgCounter, uuidMsg, response, t.Sub(start).Seconds())
