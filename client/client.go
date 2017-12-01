@@ -71,6 +71,12 @@ func Call(wg *sync.WaitGroup, counter int, ip string, port int, msgLimit int,
 					avgTime := fmt.Sprintf("%f", t.Sub(start).Seconds())
 					fmt.Println(avgTime)
 				}
+			case 3:
+				csv := fmt.Sprintf("%d,%d", partialTotal, droppedPackages)
+				fmt.Println(csv)
+			case 4:
+				csv := fmt.Sprintf("%d,%d", partialTotal, timeoutPackages)
+				fmt.Println(csv)
 			}
 
 			log.Printf("Thread: %d, Msg: %d => Send: %s, Recieved: %s, Elapsed time: %f",

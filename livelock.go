@@ -26,11 +26,11 @@ func main() {
 	serverIpPtr := flag.String("ip", "127.0.0.1", "server ip")
 	portPtr := flag.Int("port", 3333, "server port to listen for connections")
 	threadLimitPtr := flag.Int("threads", 50, "how many threads will be created")
-	msgLimitPtr := flag.Int("messages", 50, "how many threads will be created")
+	msgLimitPtr := flag.Int("messages", 50, "how many messages will be sended")
 	memMaxPtr := flag.Int("memory", 1500, "maximun global memory to store messages")
 	timeoutPtr := flag.Int("timeout", 10, "timeout in seconds to drop packages")
 	arrivalRatePtr := flag.Int("rate", 0, "arrival rate in miliseconds (default 0)")
-	printPtr := flag.Int("print", 0, "print csv to stdout 0-noprint 1-packetrate 2-time (default 0)")
+	printPtr := flag.Int("print", 0, "print csv to stdout 0-noprint 1-packetrate 2-time 3-dropped 4-timeout (default 0)")
 	debugPtr := flag.Bool("debug", true, "log to stdout")
 	flag.Parse()
 
